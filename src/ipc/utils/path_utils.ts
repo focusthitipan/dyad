@@ -14,7 +14,7 @@ import { normalizePath } from "../../../shared/normalizePath";
  */
 export function safeJoin(basePath: string, ...paths: string[]): string {
   const useWindowsPathSemantics =
-    /^[A-Za-z]:[\\/]/.test(basePath) || basePath.includes("\\");
+    /^[A-Za-z]:[\\/]/.test(basePath) || basePath.startsWith("\\\\");
   const pathModule = useWindowsPathSemantics ? path.win32 : path.posix;
 
   // Normalize backslashes to forward slashes for cross-platform consistency

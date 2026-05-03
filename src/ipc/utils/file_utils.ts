@@ -53,19 +53,27 @@ export async function copyDirectoryRecursive(
     const srcPath = path.join(source, entry.name);
     const destPath = path.join(destination, entry.name);
 
-    // Resolve symlinks so Windows doesn't EPERM on copyFile of a symlink-to-directory
-    const isDir = entry.isDirectory()
-      ? true
-      : entry.isSymbolicLink()
-        ? (await fsPromises.stat(srcPath)).isDirectory()
-        : false;
+    // Resolve symlinks so Windows doesn't EPERM on copyFile of a symlink-to-directory.
+    // For symlinks, use stat() to follow the link and determine the real type.
+    // If the symlink is broken (stat throws), skip the entry gracefully.
+    let isDir = entry.isDirectory();
+    if (!isDir && entry.isSymbolicLink()) {
+      try {
+        isDir = (await fsPromises.stat(srcPath)).isDirectory();
+      } catch {
+        // Broken symlink — skip it
+        continue;
+      }
+    }
 
     if (isDir) {
-      // Exclude node_modules directories
-      if (entry.name !== "node_modules") {
+      // Skip symlinked directories to avoid cycles or copying outside the source tree.
+      // Exclude node_modules directories.
+      if (!entry.isSymbolicLink() && entry.name !== "node_modules") {
         await copyDirectoryRecursive(srcPath, destPath);
       }
-    } else if (!entry.isSymbolicLink()) {
+    } else {
+      // For regular files and file symlinks, copy the content.
       await fsPromises.copyFile(srcPath, destPath);
     }
   }
