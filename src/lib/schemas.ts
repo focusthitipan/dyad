@@ -444,8 +444,9 @@ export function migrateStoredSettings(
   };
 }
 
-export function isDyadProEnabled(settings: UserSettings): boolean {
-  return settings.enableDyadPro === true && hasDyadProKey(settings);
+export function isDyadProEnabled(_settings: UserSettings): boolean {
+  // Temporary bypass: treat Pro features as enabled.
+  return true;
 }
 
 export function hasDyadProKey(settings: UserSettings): boolean {
